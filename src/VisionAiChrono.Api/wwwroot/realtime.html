@@ -1,0 +1,608 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💬 محادثة Real-Time</title>
+    <script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8.0.0/signalr.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Tahoma', Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+            max-height: 800px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+            .header h1 {
+                font-size: 24px;
+                margin: 0;
+            }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+            .status-dot.offline {
+                background: #ef4444;
+                animation: none;
+            }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 12px;
+            padding-top: 10px;
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.own {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            word-wrap: break-word;
+        }
+
+        .message.own .message-content {
+            background: #667eea;
+            color: white;
+            border-radius: 12px 0 12px 12px;
+        }
+
+        .message.other .message-content {
+            background: white;
+            color: #333;
+            border-radius: 0 12px 12px 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .message-system .message-content {
+            background: #f0f4ff;
+            color: #667eea;
+            border: 1px solid #667eea;
+            text-align: center;
+            max-width: 100%;
+        }
+
+        .message-alert .message-content {
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .message-meta {
+            font-size: 11px;
+            color: #999;
+            padding: 0 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .message.own .message-meta {
+            justify-content: flex-end;
+        }
+
+        .message-sender {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 3px;
+            font-size: 12px;
+        }
+
+        .input-area {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #eee;
+            border-radius: 0 0 15px 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+            input[type="text"]:focus {
+                border-color: #667eea;
+            }
+
+            input[type="text"]:disabled {
+                background: #f0f0f0;
+                cursor: not-allowed;
+            }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+            button:hover {
+                background: #764ba2;
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            }
+
+            button:active {
+                transform: translateY(0);
+            }
+
+            button:disabled {
+                background: #ccc;
+                cursor: not-allowed;
+                transform: none;
+            }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+        }
+
+            .button-group button {
+                padding: 10px 16px;
+                font-size: 12px;
+            }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #999;
+        }
+
+            .empty-state svg {
+                width: 80px;
+                height: 80px;
+                opacity: 0.3;
+                margin-bottom: 20px;
+            }
+
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 8px 16px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #999;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+            .typing-dot:nth-child(2) {
+                animation-delay: 0.2s;
+            }
+
+            .typing-dot:nth-child(3) {
+                animation-delay: 0.4s;
+            }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                opacity: 0.3;
+                transform: translateY(0);
+            }
+
+            30% {
+                opacity: 1;
+                transform: translateY(-10px);
+            }
+        }
+
+        .username-input {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+        }
+
+            .username-input input {
+                width: 200px;
+                margin-bottom: 15px;
+                border-radius: 6px;
+            }
+
+            .username-input button {
+                width: 100%;
+            }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 999;
+        }
+
+            .overlay.active {
+                display: block;
+            }
+    </style>
+</head>
+<body>
+    <div class="overlay" id="overlay"></div>
+
+    <div class="username-input" id="usernameModal">
+        <h2>اسمك؟</h2>
+        <input type="text" id="usernameInput" placeholder="أدخل اسمك" />
+        <button onclick="startChat()">دخول المحادثة 💬</button>
+    </div>
+
+    <div class="container" id="chatContainer" style="display: none;">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1>💬 محادثة Real-Time</h1>
+                <div class="stats">
+                    <div class="stat">
+                        <span>👥 مستخدمين:</span>
+                        <strong id="activeUsersCount">0</strong>
+                    </div>
+                    <div class="stat">
+                        <span>📨 رسائل:</span>
+                        <strong id="messagesCount">0</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="status-badge">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">متصل</span>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div class="messages-container" id="messagesContainer">
+            <div class="empty-state">
+                <p>لا توجد رسائل بعد...</p>
+                <p style="font-size: 12px; margin-top: 10px;">ابدأ المحادثة بإرسال رسالة أولى 👋</p>
+            </div>
+        </div>
+
+        <!-- Input -->
+        <div class="input-area">
+            <div class="input-group">
+                <input type="text"
+                       id="messageInput"
+                       placeholder="اكتب رسالتك هنا..."
+                       onkeypress="if(event.key === 'Enter') sendMessage()" />
+                <button onclick="sendMessage()">إرسال ➤</button>
+            </div>
+            <div class="button-group">
+                <button onclick="loadMessages()" title="تحديث">🔄</button>
+                <button onclick="getStats()" title="إحصائيات">📊</button>
+            </div>
+        </div>
+    </div>
+
+    <script>let connection;
+        let currentUsername = '';
+        let messageCount = 0;
+        let activeUsersCount = 0;
+
+        async function startChat() {
+            const username = document.getElementById('usernameInput').value.trim();
+
+            if (!username) {
+                alert('من فضلك أدخل اسمك');
+                return;
+            }
+
+            currentUsername = username;
+
+            // إخفاء نموذج الاسم
+            document.getElementById('usernameModal').style.display = 'none';
+            document.getElementById('overlay').classList.remove('active');
+            document.getElementById('chatContainer').style.display = 'flex';
+
+            // الاتصال بـ SignalR
+            await initSignalR();
+        }
+
+        async function initSignalR() {
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl(`/hubs/messages?username=${encodeURIComponent(currentUsername)}`)
+                .withAutomaticReconnect([0, 1000, 3000, 5000])
+                .build();
+
+            // استقبال رسالة جديدة
+            connection.on('ReceiveMessage', (message) => {
+                addMessageToUI(message);
+                messageCount++;
+                document.getElementById('messagesCount').textContent = messageCount;
+            });
+
+            // مستخدم جديد دخل
+            connection.on('UserJoined', (data) => {
+                addSystemMessage(`👋 ${data.message}`, 'system');
+                activeUsersCount = data.activeUsers;
+                updateActiveUsersCount();
+            });
+
+            // مستخدم غادر
+            connection.on('UserLeft', (data) => {
+                addSystemMessage(`👋 ${data.message}`, 'system');
+                activeUsersCount = data.activeUsers;
+                updateActiveUsersCount();
+            });
+
+            // سجل الرسائل السابقة
+            connection.on('ChatHistory', (messages) => {
+                clearMessages();
+                messages.forEach(msg => addMessageToUI(msg));
+                messageCount = messages.length;
+                document.getElementById('messagesCount').textContent = messageCount;
+            });
+
+            // مسح السجل
+            connection.on('HistoryCleared', (data) => {
+                clearMessages();
+                messageCount = 0;
+                document.getElementById('messagesCount').textContent = '0';
+                addSystemMessage('🗑️ تم مسح سجل الرسائل', 'system');
+            });
+
+            // إحصائيات
+            connection.on('ChatStats', (stats) => {
+                console.log('📊 إحصائيات المحادثة:', stats);
+                alert(`📊 إحصائيات المحادثة:\nإجمالي الرسائل: ${stats.totalMessages}\nمستخدمين نشطين: ${stats.activeUsers}`);
+            });
+
+            // قائمة المستخدمين النشطين
+            connection.on('ActiveUsersList', (users) => {
+                console.log('👥 المستخدمون النشطون:', users);
+            });
+
+            // معالجة الاتصال
+            connection.onreconnecting(() => {
+                updateConnectionStatus('reconnecting', false);
+            });
+
+            connection.onreconnected(() => {
+                updateConnectionStatus('متصل', true);
+            });
+
+            connection.onclose(() => {
+                updateConnectionStatus('غير متصل', false);
+            });
+
+            try {
+                await connection.start();
+                updateConnectionStatus('متصل', true);
+                addSystemMessage(`✅ ${currentUsername} دخل المحادثة`, 'system');
+            } catch (err) {
+                console.error('❌ خطأ في الاتصال:', err);
+                updateConnectionStatus('خطأ في الاتصال', false);
+                setTimeout(() => initSignalR(), 5000);
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const content = input.value.trim();
+
+            if (!content || !connection) return;
+
+            try {
+                await connection.invoke('SendMessage', content);
+                input.value = '';
+                input.focus();
+            } catch (err) {
+                console.error('❌ خطأ في إرسال الرسالة:', err);
+                alert('حدث خطأ في إرسال الرسالة');
+            }
+        }
+
+        function addMessageToUI(message) {
+            const container = document.getElementById('messagesContainer');
+            const isOwn = message.senderName === currentUsername;
+
+            // إزالة الرسالة الفارغة
+            const emptyState = container.querySelector('.empty-state');
+            if (emptyState) emptyState.remove();
+
+            const messageEl = document.createElement('div');
+            messageEl.className = `message ${isOwn ? 'own' : 'other'} message-${message.messageType}`;
+
+            const time = new Date(message.sentAt).toLocaleTimeString('ar-EG', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            messageEl.innerHTML = `
+                <div>
+                    ${!isOwn ? `<div class="message-meta"><span class="message-sender">${message.senderName}</span></div>` : ''}
+                    <div class="message-content">${escapeHtml(message.content)}</div>
+                    <div class="message-meta">${time}</div>
+                </div>
+            `;
+
+            container.appendChild(messageEl);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function addSystemMessage(content, type = 'system') {
+            const container = document.getElementById('messagesContainer');
+
+            const emptyState = container.querySelector('.empty-state');
+            if (emptyState) emptyState.remove();
+
+            const messageEl = document.createElement('div');
+            messageEl.className = `message message-${type}`;
+
+            messageEl.innerHTML = `
+                <div style="width: 100%; text-align: center;">
+                    <div class="message-content">${content}</div>
+                </div>
+            `;
+
+            container.appendChild(messageEl);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function updateConnectionStatus(status, isConnected) {
+            document.getElementById('statusText').textContent = status;
+            const dot = document.getElementById('statusDot');
+            dot.classList.toggle('offline', !isConnected);
+        }
+
+        function updateActiveUsersCount() {
+            document.getElementById('activeUsersCount').textContent = activeUsersCount;
+        }
+
+        async function loadMessages() {
+            if (!connection) return;
+            try {
+                await connection.invoke('GetMessages', 50);
+            } catch (err) {
+                console.error('❌ خطأ في تحميل الرسائل:', err);
+            }
+        }
+
+        async function getStats() {
+            if (!connection) return;
+            try {
+                await connection.invoke('GetChatStats');
+            } catch (err) {
+                console.error('❌ خطأ في الحصول على الإحصائيات:', err);
+            }
+        }
+
+        function clearMessages() {
+            document.getElementById('messagesContainer').innerHTML = '';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ظهور نموذج اسم المستخدم عند التحميل
+        window.addEventListener('load', () => {
+            document.getElementById('overlay').classList.add('active');
+            document.getElementById('usernameInput').focus();
+        });</script>
+</body>
+</html>

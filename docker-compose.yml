@@ -1,0 +1,19 @@
+﻿services:
+  api:
+    build:
+      context: .
+      dockerfile: src/VisionAiChrono.Api/Dockerfile
+
+    ports:
+      - "5000:8080"
+
+    depends_on:
+      - cache-redis
+
+    environment:
+      - ConnectionStrings__Redis=cache-redis:6379
+
+  cache-redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
