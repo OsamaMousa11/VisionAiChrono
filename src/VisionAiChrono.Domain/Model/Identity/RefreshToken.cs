@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using System;
 
-namespace CleanArchitectureTemplate_Domain.Model.Entity
+namespace VisionAiChrono.Domain.Model.Identity
 {
     [Owned]
     public class RefreshToken

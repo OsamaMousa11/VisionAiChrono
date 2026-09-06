@@ -1,12 +1,13 @@
 using CleanArchitectureTemplate_Domain.IRepositoryContract;
-using CleanArchitectureTemplate_Domain.Model.Entity;
 using Microsoft.EntityFrameworkCore;
-using CleanArchitectureTemplate_infrastructure.Data;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VisionAiChrono.Domain.Model.Identity;
+using VisionAiChrono.Infrastructure.Data;
 
 namespace CleanArchitectureTemplate_infrastructure.Repositories
 {

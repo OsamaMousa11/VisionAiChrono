@@ -1,4 +1,4 @@
-namespace CleanArchitectureTemplate_Api.Middlewares
+namespace VisionAiChrono.Api.Middlewares
 {
     public static class MiddlewareExtensions
     {

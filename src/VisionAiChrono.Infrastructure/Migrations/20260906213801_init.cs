@@ -3,14 +3,32 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace CleanArchitectureTemplate_infrastructure.Migrations
+namespace VisionAiChrono.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class Init : Migration
+    public partial class init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "AiModels",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
+                    ModelType = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    ConfigurationJson = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AiModels", x => x.Id);
+                });
+
             migrationBuilder.CreateTable(
                 name: "AspNetRoles",
                 columns: table => new
@@ -36,8 +54,6 @@ namespace CleanArchitectureTemplate_infrastructure.Migrations
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     IsSuspended = table.Column<bool>(type: "bit", nullable: false),
                     SuspendReason = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    MustChangePassword = table.Column<bool>(type: "bit", nullable: false),
-                    TempPasswordExpiration = table.Column<DateTime>(type: "datetime2", nullable: true),
                     OtpCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     LastOtpSentAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -76,6 +92,41 @@ namespace CleanArchitectureTemplate_infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_EmailOtps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Pipelines",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Pipelines", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Videos",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    FileName = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    FilePath = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
+                    SizeBytes = table.Column<long>(type: "bigint", nullable: true),
+                    Duration = table.Column<TimeSpan>(type: "time", nullable: true),
+                    ContentType = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Videos", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -185,59 +236,6 @@ namespace CleanArchitectureTemplate_infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Customer",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    FirstName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    LastName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Phone = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Company = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Address = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    AssignedToUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Customer", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Customer_AspNetUsers_AssignedToUserId",
-                        column: x => x.AssignedToUserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Lead",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    FirstName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    LastName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Phone = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Status = table.Column<int>(type: "int", nullable: false),
-                    AssignedToUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Lead", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Lead_AspNetUsers_AssignedToUserId",
-                        column: x => x.AssignedToUserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "RefreshToken",
                 columns: table => new
                 {
@@ -261,82 +259,202 @@ namespace CleanArchitectureTemplate_infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "TaskItem",
+                name: "PipelineModels",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Title = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    DueDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: false),
-                    AssignedToUserId = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    AssignedToUserId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    PipelineId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    AiModelId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Order = table.Column<int>(type: "int", nullable: false),
+                    ConfigurationJson = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TaskItem", x => x.Id);
+                    table.PrimaryKey("PK_PipelineModels", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_TaskItem_AspNetUsers_AssignedToUserId1",
-                        column: x => x.AssignedToUserId1,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Deal",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Title = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Value = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: false),
-                    CustomerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    AssignedToUserId = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    AssignedToUserId1 = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Deal", x => x.Id);
+                        name: "FK_PipelineModels_AiModels_AiModelId",
+                        column: x => x.AiModelId,
+                        principalTable: "AiModels",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Deal_AspNetUsers_AssignedToUserId1",
-                        column: x => x.AssignedToUserId1,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Deal_Customer_CustomerId",
-                        column: x => x.CustomerId,
-                        principalTable: "Customer",
+                        name: "FK_PipelineModels_Pipelines_PipelineId",
+                        column: x => x.PipelineId,
+                        principalTable: "Pipelines",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "Note",
+                name: "PipelineRuns",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Content = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CustomerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    PipelineId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    StartedById = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    StartedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CompletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Status = table.Column<int>(type: "int", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Note", x => x.Id);
+                    table.PrimaryKey("PK_PipelineRuns", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Note_Customer_CustomerId",
-                        column: x => x.CustomerId,
-                        principalTable: "Customer",
+                        name: "FK_PipelineRuns_AspNetUsers_StartedById",
+                        column: x => x.StartedById,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_PipelineRuns_Pipelines_PipelineId",
+                        column: x => x.PipelineId,
+                        principalTable: "Pipelines",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Favorites",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    PipelineId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    VideoId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Favorites", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Favorites_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Favorites_Pipelines_PipelineId",
+                        column: x => x.PipelineId,
+                        principalTable: "Pipelines",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Favorites_Videos_VideoId",
+                        column: x => x.VideoId,
+                        principalTable: "Videos",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PipelineRunModel",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    PipelineRunId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    AiModelId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Order = table.Column<int>(type: "int", nullable: false),
+                    ConfigurationJson = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PipelineRunModel", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PipelineRunModel_AiModels_AiModelId",
+                        column: x => x.AiModelId,
+                        principalTable: "AiModels",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_PipelineRunModel_PipelineRuns_PipelineRunId",
+                        column: x => x.PipelineRunId,
+                        principalTable: "PipelineRuns",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateTable(
+                name: "PipelineRunVideos",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    PipelineRunId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    VideoId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    ProcessedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Notes = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PipelineRunVideos", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PipelineRunVideos_PipelineRuns_PipelineRunId",
+                        column: x => x.PipelineRunId,
+                        principalTable: "PipelineRuns",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_PipelineRunVideos_Videos_VideoId",
+                        column: x => x.VideoId,
+                        principalTable: "Videos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AiResults",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    PipelineRunVideoId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    AiModelId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ResultJson = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Confidence = table.Column<double>(type: "float", nullable: true),
+                    ResultType = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ProcessedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AiResults", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AiResults_AiModels_AiModelId",
+                        column: x => x.AiModelId,
+                        principalTable: "AiModels",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_AiResults_PipelineRunVideos_PipelineRunVideoId",
+                        column: x => x.PipelineRunVideoId,
+                        principalTable: "PipelineRunVideos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AiResults_AiModelId",
+                table: "AiResults",
+                column: "AiModelId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AiResults_PipelineRunVideoId",
+                table: "AiResults",
+                column: "PipelineRunVideoId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
@@ -378,39 +496,70 @@ namespace CleanArchitectureTemplate_infrastructure.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Customer_AssignedToUserId",
-                table: "Customer",
-                column: "AssignedToUserId");
+                name: "IX_Favorites_PipelineId",
+                table: "Favorites",
+                column: "PipelineId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Deal_AssignedToUserId1",
-                table: "Deal",
-                column: "AssignedToUserId1");
+                name: "IX_Favorites_UserId_PipelineId",
+                table: "Favorites",
+                columns: new[] { "UserId", "PipelineId" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Deal_CustomerId",
-                table: "Deal",
-                column: "CustomerId");
+                name: "IX_Favorites_VideoId",
+                table: "Favorites",
+                column: "VideoId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Lead_AssignedToUserId",
-                table: "Lead",
-                column: "AssignedToUserId");
+                name: "IX_PipelineModels_AiModelId",
+                table: "PipelineModels",
+                column: "AiModelId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Note_CustomerId",
-                table: "Note",
-                column: "CustomerId");
+                name: "IX_PipelineModels_PipelineId_AiModelId",
+                table: "PipelineModels",
+                columns: new[] { "PipelineId", "AiModelId" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_TaskItem_AssignedToUserId1",
-                table: "TaskItem",
-                column: "AssignedToUserId1");
+                name: "IX_PipelineRunModel_AiModelId",
+                table: "PipelineRunModel",
+                column: "AiModelId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PipelineRunModel_PipelineRunId",
+                table: "PipelineRunModel",
+                column: "PipelineRunId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PipelineRuns_PipelineId",
+                table: "PipelineRuns",
+                column: "PipelineId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PipelineRuns_StartedById",
+                table: "PipelineRuns",
+                column: "StartedById");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PipelineRunVideos_PipelineRunId_VideoId",
+                table: "PipelineRunVideos",
+                columns: new[] { "PipelineRunId", "VideoId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PipelineRunVideos_VideoId",
+                table: "PipelineRunVideos",
+                column: "VideoId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "AiResults");
+
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
 
@@ -427,31 +576,40 @@ namespace CleanArchitectureTemplate_infrastructure.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "Deal");
-
-            migrationBuilder.DropTable(
                 name: "EmailOtps");
 
             migrationBuilder.DropTable(
-                name: "Lead");
+                name: "Favorites");
 
             migrationBuilder.DropTable(
-                name: "Note");
+                name: "PipelineModels");
+
+            migrationBuilder.DropTable(
+                name: "PipelineRunModel");
 
             migrationBuilder.DropTable(
                 name: "RefreshToken");
 
             migrationBuilder.DropTable(
-                name: "TaskItem");
+                name: "PipelineRunVideos");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
-                name: "Customer");
+                name: "AiModels");
+
+            migrationBuilder.DropTable(
+                name: "PipelineRuns");
+
+            migrationBuilder.DropTable(
+                name: "Videos");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "Pipelines");
         }
     }
 }

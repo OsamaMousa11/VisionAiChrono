@@ -14,7 +14,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
-using CleanArchitectureTemplate_Domain.Model.Entity;
+using VisionAiChrono.Domain.Model.Identity;
 
 
 namespace CleanArchitectureTemplate_Application.Services

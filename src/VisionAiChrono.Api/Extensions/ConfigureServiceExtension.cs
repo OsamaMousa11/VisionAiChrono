@@ -9,16 +9,17 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using VisionAiChrono.Application.Validators.AuthenticationValidator;
-using CleanArchitectureTemplate_Api.Filters;
-using CleanArchitectureTemplate_Api.Middlewares;
+using VisionAiChrono.Api.Filters;
+using VisionAiChrono.Api.Middlewares;
 using CleanArchitectureTemplate_Application.ServiceContract;
 using CleanArchitectureTemplate_Application.Services;
 using CleanArchitectureTemplate_Domain.IRepositoryContract;
 using CleanArchitectureTemplate_Domain.Model.Identity;
-using CleanArchitectureTemplate_infrastructure.Data;
-using CleanArchitectureTemplate_infrastructure.Repositories;
+
 using System.Reflection;
 using System.Text;
+using VisionAiChrono.Infrastructure.Data;
+using CleanArchitectureTemplate_infrastructure.Repositories;
 
 
 namespace VisionAiChrono.Api.Extensions;

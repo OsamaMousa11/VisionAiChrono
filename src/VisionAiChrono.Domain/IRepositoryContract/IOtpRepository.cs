@@ -1,9 +1,9 @@
-using CleanArchitectureTemplate_Domain.Model.Entity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VisionAiChrono.Domain.Model.Identity;
 
 namespace CleanArchitectureTemplate_Domain.IRepositoryContract
 {

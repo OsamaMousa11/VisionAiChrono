@@ -1,6 +1,6 @@
 ﻿using VisionAiChrono.Api.Extensions;
 using VisionAiChrono.Api.Hubs;
-using CleanArchitectureTemplate_Api.Middlewares;
+using VisionAiChrono.Api.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 

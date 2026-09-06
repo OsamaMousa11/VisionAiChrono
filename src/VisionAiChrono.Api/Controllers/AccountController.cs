@@ -7,7 +7,7 @@ using CleanArchitectureTemplate_Application.ServiceContract;
 using Swashbuckle.AspNetCore.Annotations;
 using System.IdentityModel.Tokens.Jwt;
 
-namespace CleanArchitectureTemplate_Api.Controllers
+namespace VisionAiChrono.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]

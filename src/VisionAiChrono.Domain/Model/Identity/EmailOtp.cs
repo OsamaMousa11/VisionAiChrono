@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CleanArchitectureTemplate_Domain.Model.Entity
+namespace VisionAiChrono.Domain.Model.Identity
 {
     public class EmailOtp : BaseEntity
     {

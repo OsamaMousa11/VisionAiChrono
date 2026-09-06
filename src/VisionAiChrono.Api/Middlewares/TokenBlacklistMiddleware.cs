@@ -1,6 +1,6 @@
 ﻿using CleanArchitectureTemplate_Application.ServiceContract;
 
-namespace CleanArchitectureTemplate_Api.Middlewares
+namespace VisionAiChrono.Api.Middlewares
 {
     public class TokenBlacklistMiddleware : IMiddleware
     {

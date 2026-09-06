@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc.Filters;
 using CleanArchitectureTemplate_Application.Exceptions;
 
-namespace CleanArchitectureTemplate_Api.Filters
+namespace VisionAiChrono.Api.Filters
 {
     public class ValidationFilter : IActionFilter
     {

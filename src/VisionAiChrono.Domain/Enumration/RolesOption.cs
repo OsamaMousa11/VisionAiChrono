@@ -10,6 +10,6 @@ namespace CleanArchitectureTemplate_Domain.Enumration
     {
         USER,
         ADMIN,
-        MANAGER
+        
     }
 }

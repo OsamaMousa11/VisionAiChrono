@@ -1,6 +1,8 @@
 using CleanArchitectureTemplate_Domain.Common;
 using CleanArchitectureTemplate_Domain.IRepositoryContract;
-using CleanArchitectureTemplate_infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using VisionAiChrono.Infrastructure.Data;
+
 using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +10,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using VisionAiChrono.Infrastructure.Data;
 
 namespace CleanArchitectureTemplate_infrastructure.Repositories
 {

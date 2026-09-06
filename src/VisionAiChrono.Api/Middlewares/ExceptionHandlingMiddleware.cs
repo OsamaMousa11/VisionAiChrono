@@ -7,7 +7,7 @@ using System.Net;
 using System.Text.Json;
 using ValidationException = CleanArchitectureTemplate_Application.Exceptions.ValidationException;
 
-namespace CleanArchitectureTemplate_Api.Middlewares;
+namespace VisionAiChrono.Api.Middlewares;
 
 public sealed class ExceptionHandlingMiddleware : IMiddleware
 {
