@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using CleanArchitectureTemplate_Domain.Model.Identity;
 using System;
 using System.Linq;
@@ -16,40 +17,47 @@ namespace CleanArchitectureTemplate_infrastructure.Persistence
             var roleManager = serviceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
             var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
             var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+            var logger = serviceProvider.GetRequiredService<ILoggerFactory>()
+                .CreateLogger(typeof(DbSeeder).FullName ?? nameof(DbSeeder));
+
+            var adminRole = RolesOption.ADMIN.ToString();
 
             // ── Roles from Domain Enumeration ──
             var roles = Enum.GetNames(typeof(RolesOption));
 
             foreach (var role in roles)
             {
-                if (!await roleManager.RoleExistsAsync(role))
-                {
-                    await roleManager.CreateAsync(new ApplicationRole
-                    {
-                        Name = role,
-                        NormalizedName = role.ToUpperInvariant()
-                    });
-                }
+                if (await roleManager.RoleExistsAsync(role))
+                    continue;
+
+                var result = await roleManager.CreateAsync(new ApplicationRole { Name = role });
+
+                if (result.Succeeded)
+                    logger.LogInformation("Seeded role {Role}.", role);
+                else
+                    logger.LogError("Failed to seed role {Role}: {Errors}", role,
+                        string.Join(" | ", result.Errors.Select(e => e.Description)));
             }
+
+            if (!await roleManager.RoleExistsAsync(adminRole))
+                return;
 
             // ── Admin user from appsettings.json ──
             var adminSection = configuration.GetSection("AdminUser");
 
-            string adminEmail = adminSection["Email"]
-                ?? throw new InvalidOperationException(
-                    "Missing 'AdminUser:Email' in appsettings.json.");
+            var adminEmail = adminSection["Email"];
+            var adminPassword = adminSection["Password"];
+            var adminName = adminSection["Name"] ?? "Administrator";
 
-            string adminPassword = adminSection["Password"]
-                ?? throw new InvalidOperationException(
-                    "Missing 'AdminUser:Password' in appsettings.json.");
-
-            string adminName = adminSection["Name"]
-                ?? throw new InvalidOperationException(
-                    "Missing 'AdminUser:Name' in appsettings.json.");
+            if (string.IsNullOrWhiteSpace(adminEmail) || string.IsNullOrWhiteSpace(adminPassword))
+            {
+                logger.LogWarning("AdminUser:Email / AdminUser:Password not configured. Admin user was not seeded.");
+                return;
+            }
 
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
 
-            if (adminUser == null)
+            if (adminUser is null)
             {
                 adminUser = new ApplicationUser
                 {
@@ -62,16 +70,30 @@ namespace CleanArchitectureTemplate_infrastructure.Persistence
                 };
 
                 var createResult = await userManager.CreateAsync(adminUser, adminPassword);
-                if (createResult.Succeeded)
+
+                if (!createResult.Succeeded)
                 {
-                    await userManager.AddToRoleAsync(adminUser, CleanArchitectureTemplate_Domain.Enumration.RolesOption.ADMIN.ToString());
+                    logger.LogError("Failed to create admin user {Email}: {Errors}", adminEmail,
+                        string.Join(" | ", createResult.Errors.Select(e => e.Description)));
+                    return;
                 }
-                else
-                {
-                    var errors = string.Join(" | ", createResult.Errors.Select(e => e.Description));
-                    throw new InvalidOperationException($"Failed to create admin user: {errors}");
-                }
+
+                logger.LogInformation("Created admin user {Email}.", adminEmail);
             }
+
+            if (await userManager.IsInRoleAsync(adminUser, adminRole))
+            {
+                logger.LogInformation("Admin user {Email} already has the {Role} role.", adminEmail, adminRole);
+                return;
+            }
+
+            var addToRole = await userManager.AddToRoleAsync(adminUser, adminRole);
+
+            if (addToRole.Succeeded)
+                logger.LogInformation("Assigned {Role} role to {Email}.", adminRole, adminEmail);
+            else
+                logger.LogError("Failed to assign {Role} to {Email}: {Errors}", adminRole, adminEmail,
+                    string.Join(" | ", addToRole.Errors.Select(e => e.Description)));
         }
     }
 }

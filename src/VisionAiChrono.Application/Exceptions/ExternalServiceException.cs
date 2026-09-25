@@ -10,6 +10,12 @@ namespace CleanArchitectureTemplate_Application.Exceptions
     {
         public string ServiceName { get; }
 
+        public ExternalServiceException(string message)
+            : base(message)
+        {
+            ServiceName = string.Empty;
+        }
+
         public ExternalServiceException(string serviceName, string message)
             : base($"[{serviceName}] {message}")
         {

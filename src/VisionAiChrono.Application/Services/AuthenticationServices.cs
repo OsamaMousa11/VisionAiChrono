@@ -24,20 +24,20 @@ namespace CleanArchitectureTemplate_Application.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly IOtpService _otpService;
-        private readonly IMailingService _mailService;
+        private readonly IEmailQueueService _emailQueueService;
         private readonly JwtDTO _jwt;
 
         public AuthenticationServices(
             UserManager<ApplicationUser> userManager,
             RoleManager<ApplicationRole> roleManager,
             IOtpService otpService,
-            IMailingService mailService,
+            IEmailQueueService emailQueueService,
             IOptions<JwtDTO> jwt)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _otpService = otpService;
-            _mailService = mailService;
+            _emailQueueService = emailQueueService;
             _jwt = jwt.Value;
         }
 
@@ -580,7 +580,7 @@ namespace CleanArchitectureTemplate_Application.Services
             try
             {
                 var welcomeHtml = $"<h1>Welcome to our platform, {user.UserName ?? user.Email}!</h1><p>Your email has been successfully verified.</p>";
-                await _mailService.SendMessageAsync(user.Email!, "Welcome to our platform ♻️", welcomeHtml, null);
+                _emailQueueService.QueueEmail(user.Email!, "Welcome to our platform", welcomeHtml);
             }
             catch { /* Email fail shouldn't block verification */ }
 

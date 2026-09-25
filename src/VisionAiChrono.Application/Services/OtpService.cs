@@ -13,12 +13,12 @@ namespace CleanArchitectureTemplate_Application.Services
     public class OtpService : IOtpService
     {
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IMailingService _mailService;
+        private readonly IEmailQueueService _emailQueueService;
 
-        public OtpService(UserManager<ApplicationUser> userManager, IMailingService mailService)
+        public OtpService(UserManager<ApplicationUser> userManager, IEmailQueueService emailQueueService)
         {
             _userManager = userManager;
-            _mailService = mailService;
+            _emailQueueService = emailQueueService;
         }
 
         public async Task SendOtpAsync(string email)
@@ -39,13 +39,17 @@ namespace CleanArchitectureTemplate_Application.Services
 
             await _userManager.UpdateAsync(user);
 
-            var body = $"Your verification code is: {otp}. It is valid for 5 minutes.";
+            var body = $@"<div style='font-family:Arial,sans-serif'>
+    <h2>Your verification code</h2>
+    <p>Your verification code is:</p>
+    <h1 style='letter-spacing:3px'>{otp}</h1>
+    <p>This code is valid for 5 minutes. If you did not request this code, please ignore this email.</p>
+</div>";
 
-            await _mailService.SendMessageAsync(
+            _emailQueueService.QueueEmail(
                 email,
                 "Verification Code",
-                body,
-                null
+                body
             );
         }
 

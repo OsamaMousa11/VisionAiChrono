@@ -1,4 +1,6 @@
 using FluentValidation;
+using Hangfire;
+using Hangfire.SqlServer;
 using Karaakeb.Core.DTO.AuthenticationDTO;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
@@ -15,9 +17,13 @@ using CleanArchitectureTemplate_Application.ServiceContract;
 using CleanArchitectureTemplate_Application.Services;
 using CleanArchitectureTemplate_Domain.IRepositoryContract;
 using CleanArchitectureTemplate_Domain.Model.Identity;
+using VisionAiChrono.Application.ServiceContract;
+using VisionAiChrono.Application.Services;
 
 using System.Reflection;
 using System.Text;
+using VisionAiChrono.Api.BackgroundJobs;
+using VisionAiChrono.Api.Services;
 using VisionAiChrono.Infrastructure.Data;
 using CleanArchitectureTemplate_infrastructure.Repositories;
 
@@ -124,6 +130,28 @@ public static class ConfigureServiceExtension
         services.Configure<JwtDTO>(configuration.GetSection("JWT"));
         services.Configure<MailSettings>(configuration.GetSection("MailSettings"));
 
+        // ✅ Hangfire (Background Jobs) — SQL Server storage
+        services.AddHangfire(config =>
+        {
+            var connStr = configuration.GetConnectionString("connstr")
+                ?? throw new InvalidOperationException("Connection string 'connstr' not found.");
+            config
+                .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+                .UseSimpleAssemblyNameTypeSerializer()
+                .UseSqlServerStorage(connStr);
+        });
+        services.AddHangfireServer(options =>
+        {
+            options.ServerName = "visionaichrono-mail-server";
+            options.WorkerCount = 5;
+        });
+        services.AddTransient<EmailJob>();
+        services.AddSingleton<IEmailQueueService, HangfireEmailQueueService>();
+
+        // ✅ Pipeline Execution (Hangfire)
+        services.AddTransient<PipelineExecutionJob>();
+        services.AddSingleton<IPipelineExecutionQueue, HangfirePipelineExecutionQueue>();
+
         // ✅ Application Services
         services.AddTransient<IMailingService, MailingService>();
         services.AddScoped<IAuthenticationServices, AuthenticationServices>();
@@ -133,6 +161,23 @@ public static class ConfigureServiceExtension
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddMemoryCache();
         services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();
+
+        // ✅ Pipeline Services
+        services.AddScoped<IPipelineService, PipelineService>();
+        services.AddScoped<IAiModelService, AiModelService>();
+        services.AddScoped<IPipelineRunService, PipelineRunService>();
+        services.AddScoped<IVideoService, VideoService>();
+        services.AddScoped<IFavoriteService, FavoriteService>();
+        services.AddScoped<IMediaStorageService, MediaStorageService>();
+        services.AddScoped<IExcelExportService, ExcelExportService>();
+
+        // ✅ AI Service
+        services.AddHttpClient("AI", client =>
+        {
+            client.BaseAddress = new Uri(
+                configuration["AI:BaseUrl"]
+                ?? throw new InvalidOperationException("AI BaseUrl is missing."));
+        });
 
         // ✅ Exception Handling
         services.AddExceptionHandling();

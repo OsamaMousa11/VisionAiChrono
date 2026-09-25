@@ -464,6 +464,51 @@ namespace VisionAiChrono.Infrastructure.Migrations
                     b.ToTable("PipelineRuns", (string)null);
                 });
 
+            modelBuilder.Entity("VisionAiChrono.Domain.Model.Entity.PipelineRunExport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("Content")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("PipelineRunId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("RowCount")
+                        .HasColumnType("int");
+
+                    b.Property<long>("SizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PipelineRunId");
+
+                    b.ToTable("PipelineRunExports", (string)null);
+                });
+
             modelBuilder.Entity("VisionAiChrono.Domain.Model.Entity.PipelineRunModel", b =>
                 {
                     b.Property<Guid>("Id")
@@ -778,6 +823,17 @@ namespace VisionAiChrono.Infrastructure.Migrations
                     b.Navigation("StartedBy");
                 });
 
+            modelBuilder.Entity("VisionAiChrono.Domain.Model.Entity.PipelineRunExport", b =>
+                {
+                    b.HasOne("VisionAiChrono.Domain.Model.Entity.PipelineRun", "PipelineRun")
+                        .WithMany("Exports")
+                        .HasForeignKey("PipelineRunId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PipelineRun");
+                });
+
             modelBuilder.Entity("VisionAiChrono.Domain.Model.Entity.PipelineRunModel", b =>
                 {
                     b.HasOne("VisionAiChrono.Domain.Model.Entity.AiModel", "AiModel")
@@ -839,6 +895,8 @@ namespace VisionAiChrono.Infrastructure.Migrations
 
             modelBuilder.Entity("VisionAiChrono.Domain.Model.Entity.PipelineRun", b =>
                 {
+                    b.Navigation("Exports");
+
                     b.Navigation("PipelineRunModels");
 
                     b.Navigation("PipelineRunVideos");

@@ -25,6 +25,7 @@ namespace VisionAiChrono.Infrastructure.Data
         public DbSet<Video> Videos { get; set; }
         public DbSet<PipelineRunVideo> PipelineRunVideos { get; set; }
         public DbSet<PipelineResult> AiResults { get; set; }
+        public DbSet<PipelineRunExport> PipelineRunExports { get; set; }
 
         // Favorites
         public DbSet<Favorite> Favorites { get; set; }

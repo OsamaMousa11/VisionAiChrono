@@ -12,6 +12,7 @@ namespace VisionAiChrono.Domain.Model.Entity
         {
             PipelineRunVideos = new List<PipelineRunVideo>();
             PipelineRunModels = new List<PipelineRunModel>();
+            Exports = new List<PipelineRunExport>();
             StartedAt = DateTime.UtcNow;
             Status = ExecutionStatus.Pending;
             CreatedAt = DateTime.UtcNow;
@@ -30,5 +31,6 @@ namespace VisionAiChrono.Domain.Model.Entity
 
         public ICollection<PipelineRunVideo> PipelineRunVideos { get; set; }
         public ICollection<PipelineRunModel> PipelineRunModels { get; set; }
+        public ICollection<PipelineRunExport> Exports { get; set; }
     }
 }
