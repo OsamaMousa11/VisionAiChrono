@@ -15,8 +15,13 @@ namespace VisionAiChrono.Domain.Model.Entity
         public Guid PipelineRunVideoId { get; set; }
         public PipelineRunVideo? PipelineRunVideo { get; set; }
 
-        public Guid AiModelId { get; set; }
+        public Guid? AiModelId { get; set; }
         public AiModel? AiModel { get; set; }
+
+        /// <summary>
+        /// 0 = person, 1 = weapon, 2 = fire. Which model produced this result.
+        /// </summary>
+        public int? TaskIndex { get; set; }
 
         public string ResultJson { get; set; } = null!;
 

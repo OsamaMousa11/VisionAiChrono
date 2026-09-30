@@ -10,14 +10,10 @@ namespace VisionAiChrono.Application.ServiceContract
     public interface IPipelineService
     {
         Task<PipelineResponseDTO> CreateAsync(CreatePipelineDTO dto);
-        Task<PipelineResponseDTO> GetByIdAsync(Guid id);
-        Task<IEnumerable<PipelineResponseDTO>> GetAllAsync();
-        Task<PipelineResponseDTO> UpdateAsync(Guid id, UpdatePipelineDTO dto);
-        Task DeleteAsync(Guid id);
-        Task<PipelineModelResponseDTO> AddModelAsync(Guid pipelineId, AddPipelineModelDTO dto);
-        Task RemoveModelAsync(Guid pipelineId, Guid modelId);
 
-        Task<PipelineRunDetailResponseDTO> CloneAsDraftAsync(Guid pipelineId, string userId, string? newName = null);
+        Task<PipelineResponseDTO> GetByIdAsync(Guid id);
+
+        Task<IEnumerable<PipelineResponseDTO>> GetAllAsync();
 
         Task<PagedResultDTO<PipelineRunHistoryResponseDTO>> GetRunHistoryAsync(
             Guid pipelineId,

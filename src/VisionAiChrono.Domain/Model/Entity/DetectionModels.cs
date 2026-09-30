@@ -39,13 +39,17 @@ public sealed class DetectionResponse
 
 public enum DetectionTask
 {
-    Person,
-    Weapon,
-    Fire
+    Person = 0,
+    Weapon = 1,
+    Fire = 2
 }
 
 public static class DetectionTaskExtensions
 {
+    /// <summary>
+    /// The route the vision detection service exposes, e.g. Person -> "/detect/person".
+    /// The API itself accepts the index (0/1/2) and maps it here.
+    /// </summary>
     public static string ToRoute(this DetectionTask task) => task switch
     {
         DetectionTask.Person => "person",
@@ -53,4 +57,15 @@ public static class DetectionTaskExtensions
         DetectionTask.Fire => "fire",
         _ => throw new ArgumentOutOfRangeException(nameof(task))
     };
+
+    public static int ToIndex(this DetectionTask task) => (int)task;
+
+    /// <summary>
+    /// Maps a raw 0/1/2 value coming from the API into a detection task.
+    /// Returns null when the value is not a known task index.
+    /// </summary>
+    public static DetectionTask? FromIndex(int index) =>
+        Enum.IsDefined(typeof(DetectionTask), index)
+            ? (DetectionTask)index
+            : null;
 }

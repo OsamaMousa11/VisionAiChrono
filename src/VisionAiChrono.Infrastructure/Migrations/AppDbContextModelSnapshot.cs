@@ -349,7 +349,7 @@ namespace VisionAiChrono.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("AiModelId")
+                    b.Property<Guid?>("AiModelId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ConfigurationJson")
@@ -367,6 +367,9 @@ namespace VisionAiChrono.Infrastructure.Migrations
                     b.Property<Guid>("PipelineId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("TaskIndex")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
@@ -375,7 +378,8 @@ namespace VisionAiChrono.Infrastructure.Migrations
                     b.HasIndex("AiModelId");
 
                     b.HasIndex("PipelineId", "AiModelId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[AiModelId] IS NOT NULL");
 
                     b.ToTable("PipelineModels", (string)null);
                 });
@@ -386,7 +390,7 @@ namespace VisionAiChrono.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("AiModelId")
+                    b.Property<Guid?>("AiModelId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<double?>("Confidence")
@@ -411,6 +415,9 @@ namespace VisionAiChrono.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TaskIndex")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -515,7 +522,7 @@ namespace VisionAiChrono.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("AiModelId")
+                    b.Property<Guid?>("AiModelId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ConfigurationJson")
@@ -532,6 +539,9 @@ namespace VisionAiChrono.Infrastructure.Migrations
 
                     b.Property<Guid>("PipelineRunId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("TaskIndex")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -773,8 +783,7 @@ namespace VisionAiChrono.Infrastructure.Migrations
                     b.HasOne("VisionAiChrono.Domain.Model.Entity.AiModel", "AiModel")
                         .WithMany("PipelineModels")
                         .HasForeignKey("AiModelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("VisionAiChrono.Domain.Model.Entity.Pipeline", "Pipeline")
                         .WithMany("PipelineModels")
@@ -792,8 +801,7 @@ namespace VisionAiChrono.Infrastructure.Migrations
                     b.HasOne("VisionAiChrono.Domain.Model.Entity.AiModel", "AiModel")
                         .WithMany("PipelineResults")
                         .HasForeignKey("AiModelId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("VisionAiChrono.Domain.Model.Entity.PipelineRunVideo", "PipelineRunVideo")
                         .WithMany("PipelineResults")
@@ -838,9 +846,7 @@ namespace VisionAiChrono.Infrastructure.Migrations
                 {
                     b.HasOne("VisionAiChrono.Domain.Model.Entity.AiModel", "AiModel")
                         .WithMany("PipelineRunModels")
-                        .HasForeignKey("AiModelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("AiModelId");
 
                     b.HasOne("VisionAiChrono.Domain.Model.Entity.PipelineRun", "PipelineRun")
                         .WithMany("PipelineRunModels")

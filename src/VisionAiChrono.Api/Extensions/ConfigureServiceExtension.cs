@@ -148,7 +148,7 @@ public static class ConfigureServiceExtension
         services.AddTransient<EmailJob>();
         services.AddSingleton<IEmailQueueService, HangfireEmailQueueService>();
 
-        // ✅ Pipeline Execution (Hangfire)
+        // ✅ Pipeline Execution (Hangfire job wrapper + queue for background runs)
         services.AddTransient<PipelineExecutionJob>();
         services.AddSingleton<IPipelineExecutionQueue, HangfirePipelineExecutionQueue>();
 
@@ -166,6 +166,7 @@ public static class ConfigureServiceExtension
         services.AddScoped<IPipelineService, PipelineService>();
         services.AddScoped<IAiModelService, AiModelService>();
         services.AddScoped<IPipelineRunService, PipelineRunService>();
+        services.AddScoped<IPipelineExecutionService, PipelineExecutionService>();
         services.AddScoped<IVideoService, VideoService>();
         services.AddScoped<IFavoriteService, FavoriteService>();
         services.AddScoped<IMediaStorageService, MediaStorageService>();

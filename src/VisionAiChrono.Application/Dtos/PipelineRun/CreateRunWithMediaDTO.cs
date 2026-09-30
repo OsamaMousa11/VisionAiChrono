@@ -1,14 +1,15 @@
-using System.ComponentModel.DataAnnotations;
+using System;
+using System.Collections.Generic;
 
 namespace VisionAiChrono.Application.Dtos.PipelineRun
 {
     public class CreateRunWithMediaDTO
     {
-        [Required]
         public Guid PipelineId { get; set; }
 
-        [Required]
-        [MinLength(1, ErrorMessage = "At least one model is required.")]
-        public List<RunModelSelectionDTO> Models { get; set; } = new List<RunModelSelectionDTO>();
+        /// <summary>
+        /// 0 = person, 1 = weapon, 2 = fire.
+        /// </summary>
+        public List<int> Tasks { get; set; } = new List<int>();
     }
 }

@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using VisionAiChrono.Application.Dtos.Pipeline;
 using VisionAiChrono.Application.Dtos.PipelineRun;
 using VisionAiChrono.Application.ServiceContract;
+using VisionAiChrono.Application.VisionDetection;
+using VisionAiChrono.Application.VisionDetection.Models;
 using VisionAiChrono.Domain.Enumration;
 
 namespace VisionAiChrono.Api.Controllers
@@ -14,10 +16,14 @@ namespace VisionAiChrono.Api.Controllers
     public class PipelineController : ControllerBase
     {
         private readonly IPipelineService _pipelineService;
+        private readonly IPipelineRunService _pipelineRunService;
 
-        public PipelineController(IPipelineService pipelineService)
+        public PipelineController(
+            IPipelineService pipelineService,
+            IPipelineRunService pipelineRunService)
         {
             _pipelineService = pipelineService;
+            _pipelineRunService = pipelineRunService;
         }
 
         [HttpPost]
@@ -28,12 +34,103 @@ namespace VisionAiChrono.Api.Controllers
             return Created(string.Empty, new ApiResponse<PipelineResponseDTO>(result, "Pipeline created successfully."));
         }
 
-        [HttpGet("{id:guid}")]
-        [ProducesResponseType(typeof(ApiResponse<PipelineResponseDTO>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetById(Guid id)
+        [HttpPost("{id:guid}/execute")]
+        [Consumes("multipart/form-data")]
+        [RequestSizeLimit(500 * 1024 * 1024)]
+        [ProducesResponseType(typeof(ApiResponse<RunExecutionResponseDTO>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> Execute(
+            Guid id,
+            [FromForm] string tasks,
+            [FromForm] IFormFileCollection files,
+            CancellationToken cancellationToken)
         {
-            var result = await _pipelineService.GetByIdAsync(id);
-            return Ok(new ApiResponse<PipelineResponseDTO>(result, "Pipeline retrieved successfully."));
+            if (files is null || files.Count == 0)
+                return BadRequest(new ApiResponse("At least one video or image file is required."));
+
+            if (!TaskIndexParser.TryParse(tasks, out var parsedTasks, out var error))
+                return BadRequest(new ApiResponse(error!));
+
+            var inputs = BuildInputs(files);
+
+            if (inputs is null)
+                return BadRequest(new ApiResponse("At least one video or image file is required."));
+
+            var userId = User.FindFirst("uid")?.Value ?? string.Empty;
+
+            var result = await _pipelineRunService.ExecuteAsync(
+                new CreateRunWithMediaDTO
+                {
+                    PipelineId = id,
+                    Tasks = parsedTasks.Select(t => t.ToIndex()).ToList()
+                },
+                inputs,
+                userId,
+                cancellationToken);
+
+            foreach (var input in inputs)
+                await input.Content.DisposeAsync();
+
+            return Ok(new ApiResponse<RunExecutionResponseDTO>(result, result.Message));
+        }
+
+        private static List<UploadedMediaInput> BuildInputs(IFormFileCollection? files)
+        {
+            var inputs = new List<UploadedMediaInput>();
+
+            if (files is null)
+                return inputs;
+
+            foreach (var file in files)
+            {
+                if (file.Length == 0)
+                    continue;
+
+                inputs.Add(new UploadedMediaInput
+                {
+                    FileName = file.FileName,
+                    ContentType = file.ContentType,
+                    Length = file.Length,
+                    Content = file.OpenReadStream()
+                });
+            }
+
+            return inputs;
+        }
+
+        [HttpPost("{id:guid}/execute-async")]
+        [Consumes("multipart/form-data")]
+        [RequestSizeLimit(500 * 1024 * 1024)]
+        [ProducesResponseType(typeof(ApiResponse<RunExecutionResponseDTO>), StatusCodes.Status202Accepted)]
+        public async Task<IActionResult> ExecuteInBackground(
+            Guid id,
+            [FromForm] string tasks,
+            [FromForm] IFormFileCollection files,
+            CancellationToken cancellationToken)
+        {
+            var inputs = BuildInputs(files);
+
+            if (inputs is null)
+                return BadRequest(new ApiResponse("At least one video or image file is required."));
+
+            if (!TaskIndexParser.TryParse(tasks, out var parsedTasks, out var error))
+                return BadRequest(new ApiResponse(error!));
+
+            var userId = User.FindFirst("uid")?.Value ?? string.Empty;
+
+            var result = await _pipelineRunService.QueueExecutionAsync(
+                new CreateRunWithMediaDTO
+                {
+                    PipelineId = id,
+                    Tasks = parsedTasks.Select(t => t.ToIndex()).ToList()
+                },
+                inputs,
+                userId,
+                cancellationToken);
+
+            foreach (var input in inputs)
+                await input.Content.DisposeAsync();
+
+            return Accepted(new ApiResponse<RunExecutionResponseDTO>(result, result.Message));
         }
 
         [HttpGet]
@@ -44,36 +141,12 @@ namespace VisionAiChrono.Api.Controllers
             return Ok(new ApiResponse<IEnumerable<PipelineResponseDTO>>(result, "Pipelines retrieved successfully."));
         }
 
-        [HttpPut("{id:guid}")]
+        [HttpGet("{id:guid}")]
         [ProducesResponseType(typeof(ApiResponse<PipelineResponseDTO>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> Update(Guid id, [FromBody] UpdatePipelineDTO dto)
+        public async Task<IActionResult> GetById(Guid id)
         {
-            var result = await _pipelineService.UpdateAsync(id, dto);
-            return Ok(new ApiResponse<PipelineResponseDTO>(result, "Pipeline updated successfully."));
-        }
-
-        [HttpDelete("{id:guid}")]
-        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-        public async Task<IActionResult> Delete(Guid id)
-        {
-            await _pipelineService.DeleteAsync(id);
-            return Ok(new ApiResponse("Pipeline deleted successfully."));
-        }
-
-        [HttpPost("{pipelineId:guid}/models")]
-        [ProducesResponseType(typeof(ApiResponse<PipelineModelResponseDTO>), StatusCodes.Status201Created)]
-        public async Task<IActionResult> AddModel(Guid pipelineId, [FromBody] AddPipelineModelDTO dto)
-        {
-            var result = await _pipelineService.AddModelAsync(pipelineId, dto);
-            return Created(string.Empty, new ApiResponse<PipelineModelResponseDTO>(result, "Model added to pipeline successfully."));
-        }
-
-        [HttpDelete("{pipelineId:guid}/models/{modelId:guid}")]
-        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status200OK)]
-        public async Task<IActionResult> RemoveModel(Guid pipelineId, Guid modelId)
-        {
-            await _pipelineService.RemoveModelAsync(pipelineId, modelId);
-            return Ok(new ApiResponse("Model removed from pipeline successfully."));
+            var result = await _pipelineService.GetByIdAsync(id);
+            return Ok(new ApiResponse<PipelineResponseDTO>(result, "Pipeline retrieved successfully."));
         }
 
         [HttpGet("{pipelineId:guid}/runs")]
@@ -90,17 +163,6 @@ namespace VisionAiChrono.Api.Controllers
 
             return Ok(new ApiResponse<PagedResultDTO<PipelineRunHistoryResponseDTO>>(
                 result, "Pipeline run history retrieved successfully."));
-        }
-
-        [HttpPost("{pipelineId:guid}/clone")]
-        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status201Created)]
-        public async Task<IActionResult> CloneAsDraft(Guid pipelineId, [FromQuery] string? name = null)
-        {
-            var userId = User.FindFirst("uid")?.Value ?? string.Empty;
-            var result = await _pipelineService.CloneAsDraftAsync(pipelineId, userId, name);
-
-            return Created(string.Empty, new ApiResponse<PipelineRunDetailResponseDTO>(
-                result, "Pipeline cloned as a new draft."));
         }
     }
 }

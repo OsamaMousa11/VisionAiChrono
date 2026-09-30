@@ -31,9 +31,10 @@ namespace VisionAiChrono.Application.Services
         {
             var run = await _unitOfWork.Repository<PipelineRun>().GetByIdAsync(
                 pipelineRunId,
-                "Pipeline,PipelineRunModels,PipelineRunModels.AiModel," +
+                "Pipeline,StartedBy," +
+                "PipelineRunModels," +
                 "PipelineRunVideos,PipelineRunVideos.Video," +
-                "PipelineRunVideos.PipelineResults,PipelineRunVideos.PipelineResults.AiModel",
+                "PipelineRunVideos.PipelineResults",
                 cancellationToken);
 
             if (run is null)
@@ -52,7 +53,7 @@ namespace VisionAiChrono.Application.Services
             using var stream = new MemoryStream();
             workbook.SaveAs(stream);
 
-            return (stream.ToArray(), $"pipeline-run-{run.Id:yyyyMMdd-HHmmss}.xlsx");
+            return (stream.ToArray(), $"pipeline-run-{run.CreatedAt:yyyyMMdd-HHmmss}-{run.Id:N}.xlsx");
         }
 
         private static void BuildSummarySheet(XLWorkbook workbook, PipelineRun run, List<PipelineResult> results)
@@ -80,6 +81,11 @@ namespace VisionAiChrono.Application.Services
                 sheet.Cell(row, 2).Value = value is null ? string.Empty : Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty;
             }
 
+            void WriteDatePair(string label, DateTime? value)
+            {
+                WritePair(label, value?.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) ?? string.Empty);
+            }
+
             var header = sheet.Cell(1, 1);
             header.Value = "Pipeline Run Report";
             header.Style.Font.Bold = true;
@@ -93,19 +99,20 @@ namespace VisionAiChrono.Application.Services
             WritePair("Pipeline", run.Pipeline?.Name ?? string.Empty);
             WritePair("Status", run.Status.ToString());
             WritePair("Started By", run.StartedBy?.FullName ?? run.StartedBy?.Email ?? string.Empty);
-            WritePair("Started At", run.StartedAt);
-            WritePair("Completed At", run.CompletedAt);
+            WriteDatePair("Started At", run.StartedAt);
+            WriteDatePair("Completed At", run.CompletedAt);
             WritePair("Duration (seconds)", run.CompletedAt.HasValue
-                ? Math.Round((run.CompletedAt.Value - run.StartedAt).TotalSeconds)
-                : (object)"still running");
+                ? Math.Round((run.CompletedAt.Value - run.StartedAt).TotalSeconds).ToString(CultureInfo.InvariantCulture)
+                : "still running");
 
             WriteSection("Totals");
             WritePair("Media count", run.PipelineRunVideos?.Count ?? 0);
-            WritePair("Model count", run.PipelineRunModels?.Count ?? 0);
+            WritePair("Task count", run.PipelineRunModels?.Count ?? 0);
             WritePair("Result count", results.Count);
             WritePair("Succeeded results", results.Count(r => r.Status == VisionAiChrono.Domain.Enumration.ExecutionStatus.Succeeded));
             WritePair("Failed results", results.Count(r => r.Status == VisionAiChrono.Domain.Enumration.ExecutionStatus.Failed));
-            WritePair("Average confidence", results.Where(r => r.Confidence.HasValue).Select(r => r.Confidence!.Value).DefaultIfEmpty(0).Average());
+            var confidences = results.Where(r => r.Confidence.HasValue).Select(r => r.Confidence!.Value).ToList();
+            WritePair("Average confidence", confidences.Count == 0 ? string.Empty : confidences.Average());
             WritePair("Total detections", results.Sum(r => ReadDetectionCount(r)));
 
             sheet.Column(1).Width = 26;
@@ -118,7 +125,7 @@ namespace VisionAiChrono.Application.Services
 
             var headers = new[]
             {
-                "RunId", "Pipeline", "MediaFile", "Model", "ModelType", "Task",
+                "RunId", "Pipeline", "MediaFile", "TaskIndex", "Task",
                 "ResultType", "Detections", "Confidence", "Status", "ProcessedAt", "ResultJson"
             };
 
@@ -137,24 +144,24 @@ namespace VisionAiChrono.Application.Services
             {
                 foreach (var result in runVideo.PipelineResults ?? new List<PipelineResult>())
                 {
-                    var model = result.AiModel;
-
                     sheet.Cell(row, 1).Value = run.Id.ToString();
                     sheet.Cell(row, 2).Value = run.Pipeline?.Name ?? string.Empty;
                     sheet.Cell(row, 3).Value = runVideo.Video?.FileName ?? string.Empty;
-                    sheet.Cell(row, 4).Value = model?.Name ?? string.Empty;
-                    sheet.Cell(row, 5).Value = model?.ModelType ?? string.Empty;
-                    sheet.Cell(row, 6).Value = ReadTask(result);
-                    sheet.Cell(row, 7).Value = result.ResultType ?? string.Empty;
-                    sheet.Cell(row, 8).Value = ReadDetectionCount(result);
-                    sheet.Cell(row, 9).Value = result.Confidence ?? 0d;
+                    sheet.Cell(row, 4).Value = result.TaskIndex ?? 0;
+                    sheet.Cell(row, 5).Value = ResolveTaskName(result);
+                    sheet.Cell(row, 6).Value = result.ResultType ?? string.Empty;
+                    sheet.Cell(row, 7).Value = ReadDetectionCount(result);
+                    sheet.Cell(row, 8).Value = result.Confidence.HasValue
+                        ? result.Confidence.Value
+                        : string.Empty;
 
                     if (result.Confidence.HasValue)
-                        sheet.Cell(row, 9).Style.NumberFormat.Format = "0.00%";
+                        sheet.Cell(row, 8).Style.NumberFormat.Format = "0.00%";
 
-                    sheet.Cell(row, 10).Value = result.Status.ToString();
-                    sheet.Cell(row, 11).Value = result.ProcessedAt;
-                    sheet.Cell(row, 12).Value = result.ResultJson ?? string.Empty;
+                    sheet.Cell(row, 9).Value = result.Status.ToString();
+                    sheet.Cell(row, 10).Value = result.ProcessedAt;
+                    sheet.Cell(row, 10).Style.DateFormat.Format = "yyyy-mm-dd hh:mm:ss";
+                    sheet.Cell(row, 11).Value = result.ResultJson ?? string.Empty;
 
                     row++;
                 }
@@ -192,6 +199,7 @@ namespace VisionAiChrono.Application.Services
                 sheet.Cell(row, 4).Value = runVideo.Video?.ContentType ?? string.Empty;
                 sheet.Cell(row, 5).Value = runVideo.Status.ToString();
                 sheet.Cell(row, 6).Value = runVideo.ProcessedAt;
+                sheet.Cell(row, 6).Style.DateFormat.Format = "yyyy-mm-dd hh:mm:ss";
                 sheet.Cell(row, 7).Value = runVideo.Notes ?? string.Empty;
                 row++;
             }
@@ -229,24 +237,15 @@ namespace VisionAiChrono.Application.Services
             return 0;
         }
 
-        private static string ReadTask(PipelineResult result)
+        private static string ResolveTaskName(PipelineResult result)
         {
-            if (string.IsNullOrWhiteSpace(result.ResultJson))
+            if (result.TaskIndex is null)
                 return string.Empty;
 
-            try
-            {
-                using var document = JsonDocument.Parse(result.ResultJson);
-                var root = document.RootElement;
+            var task = VisionAiChrono.Application.VisionDetection.Models.DetectionTaskExtensions
+                .FromIndex(result.TaskIndex.Value);
 
-                if (root.TryGetProperty("task", out var value) && value.ValueKind == JsonValueKind.String)
-                    return value.GetString() ?? string.Empty;
-            }
-            catch (JsonException)
-            {
-            }
-
-            return string.Empty;
+            return task?.ToString() ?? string.Empty;
         }
     }
 }

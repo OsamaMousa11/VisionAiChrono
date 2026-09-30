@@ -132,6 +132,17 @@ namespace CleanArchitectureTemplate_infrastructure.Repositories
             _dbSet.RemoveRange(entities);
         }
 
+        public virtual void Detach(T entity)
+        {
+            if (entity is null)
+                return;
+
+            var entry = _context.Entry(entity);
+
+            if (entry.State != EntityState.Detached)
+                entry.State = EntityState.Detached;
+        }
+
         #endregion
 
         #region Utilities

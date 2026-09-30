@@ -34,6 +34,9 @@ namespace CleanArchitectureTemplate_Domain.IRepositoryContract
         void Delete(T entity);
         void DeleteRange(IEnumerable<T> entities);
 
+        //  Detach (stops tracking an entity so a fresh copy can be attached)
+        void Detach(T entity);
+
         //  Utilities 
         Task<int> CountAsync(Expression<Func<T, bool>>? predicate = null, CancellationToken cancellationToken = default);
 
